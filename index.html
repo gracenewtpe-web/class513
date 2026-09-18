@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>五年13班 聯絡簿黑板</title>
+  <style>
+    :root {
+      --frame-color: #5c3826;
+      --board-color: #234335;
+      --chalk-white: #f5f6f5;
+      --chalk-yellow: #f8df67;
+      --chalk-orange: #fca369;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #f3efe9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #ffffff;
+      padding: 10px 18px;
+      border-radius: 40px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .nav-btn {
+      background-color: #f0f0f0;
+      border: 1px solid #d5d5d5;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover {
+      background-color: #e2e2e2;
+    }
+
+    .date-input {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+      font-weight: 500;
+      outline: none;
+    }
+
+    .blackboard-frame {
+      width: 100%;
+      max-width: 900px;
+      background-color: var(--frame-color);
+      padding: 16px;
+      border-radius: 16px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+    }
+
+    .blackboard {
+      background-color: var(--board-color);
+      border-radius: 8px;
+      min-height: 520px;
+      padding: 32px 28px;
+      box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.55);
+      display: flex;
+      flex-direction: column;
+      color: var(--chalk-white);
+      position: relative;
+    }
+
+    .board-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
+      padding-bottom: 14px;
+      margin-bottom: 24px;
+    }
+
+    .board-title {
+      font-size: 20px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      color: var(--chalk-yellow);
+    }
+
+    .board-status {
+      font-size: 14px;
+      opacity: 0.85;
+    }
+
+    .board-writing-area {
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+      font-size: 24px;
+      line-height: 2.3;
+      letter-spacing: 5px;
+      flex-grow: 1;
+      height: 380px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-weight: 500;
+      text-shadow: 0 0 2px rgba(255, 255, 255, 0.45);
+    }
+
+    .board-footer {
+      margin-top: 20px;
+      padding-top: 12px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.2);
+      font-size: 15px;
+      color: var(--chalk-orange);
+      letter-spacing: 1px;
+    }
+
+    .empty-message {
+      writing-mode: horizontal-tb;
+      text-align: center;
+      margin-top: 120px;
+      font-size: 17px;
+      color: rgba(255, 255, 255, 0.65);
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <button class="nav-btn" onclick="shiftDay(-1)">◀ 前一天</button>
+    <input type="date" id="datePicker" class="date-input">
+    <button class="nav-btn" onclick="shiftDay(1)">後一天 ▶</button>
+    <button class="nav-btn" style="background:#234335; color:#fff;" onclick="setToday()">今天</button>
+  </div>
+
+  <div class="blackboard-frame">
+    <div class="blackboard">
+      <div class="board-header">
+        <div class="board-title">五年13班 聯絡簿</div>
+        <div id="displayDate" class="board-status">載入中...</div>
+      </div>
+
+      <div id="boardWriting" class="board-writing-area">資料載入中...</div>
+      <div id="boardNote" class="board-footer" style="display: none;"></div>
+    </div>
+  </div>
+
+  <script>
+    const SHEET_ID = '1lipOeInqUswFTJHkj5vmoargFtlcQXfKs2p4PZT2zHo';
+    let logData = {};
+
+    const datePicker = document.getElementById('datePicker');
+    const boardWriting = document.getElementById('boardWriting');
+    const boardNote = document.getElementById('boardNote');
+    const displayDate = document.getElementById('displayDate');
+
+    function padZero(n) {
+      return n < 10 ? '0' + n : '' + n;
+    }
+
+    // 將各種常見日期格式統一轉為 YYYY-MM-DD
+    function normalizeDate(raw) {
+      if (!raw) return '';
+      raw = String(raw).trim();
+
+      // 情況 1：Google Date(yyyy,m,d)
+      if (raw.startsWith('Date(')) {
+        const p = raw.match(/\d+/g);
+        if (p) {
+          return `${p[0]}-${padZero(parseInt(p[1]) + 1)}-${padZero(p[2])}`;
+        }
+      }
+
+      // 情況 2：YYYY/M/D 或 YYYY-M-D
+      const parts = raw.split(/[\/\-\.]/);
+      if (parts.length === 3) {
+        let y = parts[0];
+        let m = parts[1];
+        let d = parts[2];
+        if (y.length === 2) y = '20' + y;
+        return `${y}-${padZero(parseInt(m))}-${padZero(parseInt(d))}`;
+      }
+
+      // 情況 3：M/D (預設當前年 2026)
+      if (parts.length === 2) {
+        return `2026-${padZero(parseInt(parts[0]))}-${padZero(parseInt(parts[1]))}`;
+      }
+
+      return raw;
+    }
+
+    // JSONP 回呼函式（完全規避本機跨域限制）
+    window.googleSheetCallback = function(data) {
+      try {
+        const rows = data.table.rows;
+        rows.forEach(r => {
+          if (!r.c || !r.c[0]) return;
+          const rawDate = r.c[0].f || r.c[0].v;
+          const cleanDate = normalizeDate(rawDate);
+
+          const content = (r.c[1] && (r.c[1].f || r.c[1].v)) ? String(r.c[1].f || r.c[1].v) : '';
+          const note = (r.c[2] && (r.c[2].f || r.c[2].v)) ? String(r.c[2].f || r.c[2].v) : '';
+
+          if (cleanDate) {
+            logData[cleanDate] = { content, note };
+          }
+        });
+      } catch (e) {
+        console.error("資料解析錯誤", e);
+      }
+      renderBoard();
+    };
+
+    function renderBoard() {
+      const selected = datePicker.value;
+      const parts = selected.split('-');
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+      const weekStr = isNaN(d.getDay()) ? '' : ` (星期${weekDays[d.getDay()]})`;
+
+      displayDate.innerText = `${selected}${weekStr}`;
+
+      const entry = logData[selected];
+      if (entry && entry.content) {
+        boardWriting.className = "board-writing-area";
+        boardWriting.innerText = entry.content;
+
+        if (entry.note) {
+          boardNote.style.display = "block";
+          boardNote.innerText = entry.note;
+        } else {
+          boardNote.style.display = "none";
+        }
+      } else {
+        boardWriting.className = "";
+        boardWriting.innerHTML = '<div class="empty-message">本日無登記聯絡事項 📝</div>';
+        boardNote.style.display = "none";
+      }
+    }
+
+    function setToday() {
+      const now = new Date();
+      datePicker.value = `${now.getFullYear()}-${padZero(now.getMonth() + 1)}-${padZero(now.getDate())}`;
+      renderBoard();
+    }
+
+    function shiftDay(days) {
+      const parts = datePicker.value.split('-');
+      const cur = new Date(parts[0], parts[1] - 1, parts[2]);
+      cur.setDate(cur.getDate() + days);
+      datePicker.value = `${cur.getFullYear()}-${padZero(cur.getMonth() + 1)}-${padZero(cur.getDate())}`;
+      renderBoard();
+    }
+
+    datePicker.addEventListener('change', renderBoard);
+
+    // 預設切換為今日
+    setToday();
+
+    // 透過動態載入 Script 標籤取得資料（避開 file:// 的 CORS 限制）
+    const script = document.createElement('script');
+    script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=responseHandler:googleSheetCallback`;
+    document.body.appendChild(script);
+  </script>
+</body>
+</html>
