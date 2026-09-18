@@ -11,6 +11,7 @@
       --chalk-white: #f5f6f5;
       --chalk-yellow: #f8df67;
       --chalk-orange: #fca369;
+      --chalk-green: #9ae6b4;
     }
 
     * {
@@ -26,7 +27,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 24px 16px;
+      padding: 20px 14px 40px;
     }
 
     .toolbar {
@@ -37,7 +38,7 @@
       padding: 10px 18px;
       border-radius: 40px;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-      margin-bottom: 20px;
+      margin-bottom: 18px;
       flex-wrap: wrap;
       justify-content: center;
     }
@@ -72,18 +73,18 @@
       padding: 16px;
       border-radius: 16px;
       box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+      margin-bottom: 24px;
     }
 
     .blackboard {
       background-color: var(--board-color);
       border-radius: 8px;
       min-height: 520px;
-      padding: 32px 28px;
+      padding: 28px 24px;
       box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.55);
       display: flex;
       flex-direction: column;
       color: var(--chalk-white);
-      position: relative;
     }
 
     .board-header {
@@ -91,8 +92,8 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
-      padding-bottom: 14px;
-      margin-bottom: 24px;
+      padding-bottom: 12px;
+      margin-bottom: 20px;
     }
 
     .board-title {
@@ -110,33 +111,137 @@
     .board-writing-area {
       writing-mode: vertical-rl;
       text-orientation: upright;
-      font-size: 24px;
+      font-size: 23px;
       line-height: 2.3;
-      letter-spacing: 5px;
+      letter-spacing: 4px;
       flex-grow: 1;
-      height: 380px;
+      min-height: 340px;
       overflow-x: auto;
       white-space: pre-wrap;
       font-weight: 500;
       text-shadow: 0 0 2px rgba(255, 255, 255, 0.45);
     }
 
-    .board-footer {
-      margin-top: 20px;
+    .board-extras {
+      margin-top: 18px;
       padding-top: 12px;
       border-top: 1px dashed rgba(255, 255, 255, 0.2);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
       font-size: 15px;
-      color: var(--chalk-orange);
-      letter-spacing: 1px;
+    }
+
+    .extra-tag {
+      font-weight: bold;
+      margin-right: 6px;
     }
 
     .empty-message {
       writing-mode: horizontal-tb;
       text-align: center;
-      margin-top: 120px;
+      margin-top: 100px;
       font-size: 17px;
       color: rgba(255, 255, 255, 0.65);
-      letter-spacing: 1px;
+    }
+
+    /* 家長回饋與簽到卡片 */
+    .interaction-card {
+      width: 100%;
+      max-width: 900px;
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 20px 24px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+    }
+
+    .card-title {
+      font-size: 17px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .form-control:focus {
+      border-color: #234335;
+    }
+
+    .feedback-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .radio-tag {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 20px;
+      font-size: 13px;
+      background: #f9fafb;
+      user-select: none;
+    }
+
+    .radio-tag input {
+      display: none;
+    }
+
+    .radio-tag.active {
+      background-color: #e6f4ea;
+      border-color: #234335;
+      color: #234335;
+      font-weight: bold;
+    }
+
+    .submit-btn {
+      background-color: #234335;
+      color: white;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .submit-btn:hover {
+      background-color: #172e24;
+    }
+
+    .submit-btn:disabled {
+      background-color: #9ca3af;
+      cursor: not-allowed;
     }
   </style>
 </head>
@@ -157,68 +262,124 @@
       </div>
 
       <div id="boardWriting" class="board-writing-area">資料載入中...</div>
-      <div id="boardNote" class="board-footer" style="display: none;"></div>
+
+      <div id="boardExtras" class="board-extras" style="display: none;">
+        <div id="extraNote" style="color: var(--chalk-orange); display: none;"></div>
+        <div id="extraTopic" style="color: var(--chalk-yellow); display: none;"></div>
+        <div id="extraSelf" style="color: var(--chalk-green); display: none;"></div>
+      </div>
     </div>
+  </div>
+
+  <!-- 家長雙向簽到回饋區 -->
+  <div class="interaction-card">
+    <div class="card-title">✍️ 家長線上查閱簽到與回饋</div>
+    <form id="checkinForm" onsubmit="handleCheckin(event)">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>學生座號（1～25 號）</label>
+          <select id="studentSelect" class="form-control" required>
+            <option value="">請選擇座號...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>今日完成狀態</label>
+          <div class="feedback-options" id="statusContainer">
+            <label class="radio-tag active">
+              <input type="radio" name="statusOption" value="👍 聯絡簿已查閱確認" checked> 👍 已查閱確認
+            </label>
+            <label class="radio-tag">
+              <input type="radio" name="statusOption" value="❤️ 孩子今天很主動專注"> ❤️ 孩子今天很主動
+            </label>
+            <label class="radio-tag">
+              <input type="radio" name="statusOption" value="💬 有事項想與老師聊聊"> 💬 想與老師聊聊
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label>家長悄悄話 / 提問（選填，50字以內）</label>
+        <input type="text" id="parentMessage" class="form-control" maxlength="50" placeholder="例如：孩子昨晚較晚睡，今天再請老師多關心～">
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span id="submitMsg" style="font-size: 14px; font-weight: 500;"></span>
+        <button type="submit" id="submitBtn" class="submit-btn">送出簽到</button>
+      </div>
+    </form>
   </div>
 
   <script>
     const SHEET_ID = '1lipOeInqUswFTJHkj5vmoargFtlcQXfKs2p4PZT2zHo';
+    // 已直接填入您部署的 Apps Script Web App 網址
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQ127uAvVf7QIY6PXTI-rwP8xMumPYs1T3q94YMXx7xi3I-OXizbKQERNeQDiBTS_U/exec';
+
     let logData = {};
 
     const datePicker = document.getElementById('datePicker');
     const boardWriting = document.getElementById('boardWriting');
-    const boardNote = document.getElementById('boardNote');
+    const boardExtras = document.getElementById('boardExtras');
+    const extraNote = document.getElementById('extraNote');
+    const extraTopic = document.getElementById('extraTopic');
+    const extraSelf = document.getElementById('extraSelf');
     const displayDate = document.getElementById('displayDate');
+
+    // 建立 1～25 號下拉選單
+    const studentSelect = document.getElementById('studentSelect');
+    for (let i = 1; i <= 25; i++) {
+      const opt = document.createElement('option');
+      const numStr = i < 10 ? '0' + i : '' + i;
+      opt.value = `${numStr} 號`;
+      opt.textContent = `${numStr} 號 學生`;
+      studentSelect.appendChild(opt);
+    }
+
+    // 單選標籤切換
+    document.querySelectorAll('.radio-tag').forEach(tag => {
+      tag.addEventListener('click', function() {
+        document.querySelectorAll('.radio-tag').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
 
     function padZero(n) {
       return n < 10 ? '0' + n : '' + n;
     }
 
-    // 將各種常見日期格式統一轉為 YYYY-MM-DD
     function normalizeDate(raw) {
       if (!raw) return '';
       raw = String(raw).trim();
-
-      // 情況 1：Google Date(yyyy,m,d)
       if (raw.startsWith('Date(')) {
         const p = raw.match(/\d+/g);
-        if (p) {
-          return `${p[0]}-${padZero(parseInt(p[1]) + 1)}-${padZero(p[2])}`;
-        }
+        if (p) return `${p[0]}-${padZero(parseInt(p[1]) + 1)}-${padZero(p[2])}`;
       }
-
-      // 情況 2：YYYY/M/D 或 YYYY-M-D
       const parts = raw.split(/[\/\-\.]/);
       if (parts.length === 3) {
         let y = parts[0];
         let m = parts[1];
         let d = parts[2];
         if (y.length === 2) y = '20' + y;
-        return `${y}-${padZero(parseInt(m))}-${padZero(parseInt(d))}`;
+        return `${y}-${padZero(parseInt(parts[1]))}-${padZero(parseInt(parts[2]))}`;
       }
-
-      // 情況 3：M/D (預設當前年 2026)
-      if (parts.length === 2) {
-        return `2026-${padZero(parseInt(parts[0]))}-${padZero(parseInt(parts[1]))}`;
-      }
-
+      if (parts.length === 2) return `2026-${padZero(parseInt(parts[0]))}-${padZero(parseInt(parts[1]))}`;
       return raw;
     }
 
-    // JSONP 回呼函式（完全規避本機跨域限制）
     window.googleSheetCallback = function(data) {
       try {
         const rows = data.table.rows;
         rows.forEach(r => {
           if (!r.c || !r.c[0]) return;
-          const rawDate = r.c[0].f || r.c[0].v;
-          const cleanDate = normalizeDate(rawDate);
-
+          const cleanDate = normalizeDate(r.c[0].f || r.c[0].v);
           const content = (r.c[1] && (r.c[1].f || r.c[1].v)) ? String(r.c[1].f || r.c[1].v) : '';
           const note = (r.c[2] && (r.c[2].f || r.c[2].v)) ? String(r.c[2].f || r.c[2].v) : '';
+          const topic = (r.c[3] && (r.c[3].f || r.c[3].v)) ? String(r.c[3].f || r.c[3].v) : '';
+          const selfList = (r.c[4] && (r.c[4].f || r.c[4].v)) ? String(r.c[4].f || r.c[4].v) : '';
 
           if (cleanDate) {
-            logData[cleanDate] = { content, note };
+            logData[cleanDate] = { content, note, topic, selfList };
           }
         });
       } catch (e) {
@@ -241,16 +402,37 @@
         boardWriting.className = "board-writing-area";
         boardWriting.innerText = entry.content;
 
+        let hasExtras = false;
+
         if (entry.note) {
-          boardNote.style.display = "block";
-          boardNote.innerText = entry.note;
+          extraNote.style.display = "block";
+          extraNote.innerHTML = `<span class="extra-tag">💡 備註提醒：</span>${entry.note}`;
+          hasExtras = true;
         } else {
-          boardNote.style.display = "none";
+          extraNote.style.display = "none";
         }
+
+        if (entry.topic) {
+          extraTopic.style.display = "block";
+          extraTopic.innerHTML = `<span class="extra-tag">🌱 今日聊天話題：</span>${entry.topic}`;
+          hasExtras = true;
+        } else {
+          extraTopic.style.display = "none";
+        }
+
+        if (entry.selfList) {
+          extraSelf.style.display = "block";
+          extraSelf.innerHTML = `<span class="extra-tag">🎒 明日自律清單：</span>${entry.selfList}`;
+          hasExtras = true;
+        } else {
+          extraSelf.style.display = "none";
+        }
+
+        boardExtras.style.display = hasExtras ? "flex" : "none";
       } else {
         boardWriting.className = "";
         boardWriting.innerHTML = '<div class="empty-message">本日無登記聯絡事項 📝</div>';
-        boardNote.style.display = "none";
+        boardExtras.style.display = "none";
       }
     }
 
@@ -268,12 +450,45 @@
       renderBoard();
     }
 
+    // 處理家長簽到回傳
+    async function handleCheckin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const msg = document.getElementById('submitMsg');
+
+      btn.disabled = true;
+      btn.innerText = "簽到傳送中...";
+      msg.innerText = "";
+
+      const studentId = document.getElementById('studentSelect').value;
+      const status = document.querySelector('input[name="statusOption"]:checked').value;
+      const message = document.getElementById('parentMessage').value.trim();
+      const boardDate = datePicker.value;
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ boardDate, studentId, status, message })
+        });
+
+        msg.style.color = "#15803d";
+        msg.innerText = `✅ ${studentId} 家長簽到成功！`;
+        document.getElementById('parentMessage').value = "";
+      } catch (err) {
+        msg.style.color = "#b91c1c";
+        msg.innerText = "⚠️ 傳送失敗，請稍後再試。";
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "送出簽到";
+      }
+    }
+
     datePicker.addEventListener('change', renderBoard);
 
-    // 預設切換為今日
     setToday();
 
-    // 透過動態載入 Script 標籤取得資料（避開 file:// 的 CORS 限制）
     const script = document.createElement('script');
     script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=responseHandler:googleSheetCallback`;
     document.body.appendChild(script);
